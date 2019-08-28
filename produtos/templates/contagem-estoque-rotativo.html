@@ -1,0 +1,171 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}{{ block.super }}
+
+<h1>Relatório <small>Contagem Estoque Rotativo por Produto</small></h1>
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+	<!-- [08/08/19] Modified by: R.Zacche 
+    <div class="inner"> -->
+    <div class="inner" ng-app="appPilar" ng-controller="ctrlContagemEstoqueRotativo">
+        <table class="form">
+            {{form}}
+			<!-- [08/08/19] Added by: R.Zacche - INI -->
+			<style>
+			.btn-primary {
+				color: #fff;
+				background-color: #007bff;
+				border-color: #007bff;
+			}
+			.btn {
+				display: inline-block;
+				font-weight: 400;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				border: 1px solid transparent;
+				padding: .105rem .5rem;
+				font-size: 1rem;
+				line-height: 1.5;
+				border-radius: .25rem;
+				transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+			}
+			.alert-primary {
+				color: #004085;
+				background-color: #cce5ff;
+				border-color: #b8daff;
+			}
+			.alert {
+				position: relative;
+				padding: .75rem 1.25rem;
+				margin-top: .3rem;
+				border: 1px solid transparent;
+				border-radius: .25rem;
+			}
+			</style>
+			<tr>
+				<td colspan="2">
+					<b>Códigos ou descrição:</b>
+					<div class="input-group">						
+						<input class="form-control" type="search" id="textoBusca">
+						<span class="input-group-append">
+							<!-- O elemento abaixo só é visivel em mobile. Oculto em tablets e computador -->
+							<button ng-click="buscarProduto()" class="btn btn-primary" type="button" id="buscarProduto">
+								Pesquisar
+							</button>
+						</span>
+						<div ng-if="produtos">
+							<!--<div ng-bind="produto.label" class="alert alert-primary">
+							</div>-->
+							<input type="hidden" name="produto_pk" id="produto_pk" />
+							<table id="listaProdutos" style="margin-top:8px">
+								<thead>
+									<tr>
+										<th>Produto</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr ng-repeat="prod in produtos">
+										<td><input type="radio" name="prod" ng-click="selecionarProduto()" /></td>
+										<td ng-bind="prod.label"></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</td>
+			</tr>
+			<!-- [08/08/19] Added by: R.Zacche - END -->
+        </table>
+    </div>
+	<br>
+    <button id="btnGerarPDF" type="submit" class="btn btn-primary" hidden>Gerar PDF</button>
+	<span id="msgAvisoGerarPDF" class="alert alert-primary">Selecione um produto para liberar a consulta</span>
+</form>
+
+<br/>
+
+<p><small>Explicar sobre o relatório.</small></p>
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/zepto.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.mask.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/relatorio-contagem-estoque.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<!-- [08/08/19] Added by: R.Zacche -->
+<!-- AngularJS -->
+<script type="text/javascript" src="{{STATIC_URL}}js/angularjs/angular_1.5.8.min.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/angularjs/angular-locale_pt-br.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/angularjs/app.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/angularjs/funcoes.js"></script>
+<script type="text/javascript">
+$("#produto_pk").val('');
+$("#btnGerarPDF").hide();
+$("#msgAvisoGerarPDF").show();
+app.controller("ctrlContagemEstoqueRotativo", function( $scope, $http, Funcao ){
+	// Localiza e retorna o produto com texto de busca --------
+    $scope.buscarProduto = function(){
+
+		$("#produto_pk").val('');
+		$("#btnGerarPDF").hide();
+		$("#msgAvisoGerarPDF").show();
+        var textoBusca = $('#textoBusca').val();
+
+        //$scope.estoqueDiario.data != undefined && 
+        if ( textoBusca != undefined && textoBusca.length > 1 && textoBusca != '' ){
+            // Faz busca do produto informado
+
+            cliente_pk = $('#id_cliente').val();
+            //data = Funcao.converteDateStringFormat($scope.estoqueDiario.data);
+
+            var url = '/produtos/buscar-produto-estoque/';
+
+            var fd = new FormData();
+            fd.append('cliente_pk' , cliente_pk);
+            fd.append('textoBusca' , textoBusca);
+    
+            $http.post(url, fd, {
+                transformRequest: angular.identity,
+                headers: {'Content-Type': undefined}
+            })
+            .then( 
+                function(response){
+
+                    if( response.data.res == 'no' ){
+                        alert('O produto não foi localizado. Tente novamente!');
+                    };
+
+					$scope.produtos = [];
+                    if ( response.data.res == 'ok'){
+                        if ( response.data.quant > 1 ){
+							$scope.produtos = response.data.lista_produtos;
+                        }else{
+							response.data.produto.label = response.data.produto.codigo_interno+' - '+response.data.produto.codigo_barras+' - '+response.data.produto.descricao;
+							$scope.produtos.push(response.data.produto);
+							//$("#produto_pk").val(response.data.produto.pk);
+							//$("#btnGerarPDF").show();
+							//$("#msgAvisoGerarPDF").hide();
+							//$("input[name=prod]")[0].prop("checked",false);
+                        };
+                    }
+                }
+            );
+        } else {
+            $('#produto').focus()
+        };
+    }
+	
+	$scope.selecionarProduto = function(){
+		$("#produto_pk").val($(this)[0].prod.pk);
+		$("#btnGerarPDF").show();
+		$("#msgAvisoGerarPDF").hide();
+	}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "admin/change_form.html" %}
+
+
+{% block object-tools %}{{ block.super }}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+    {% if not original.fechado %}
+    <li>
+        <a href="/inventario/fechar/{{original.pk}}/">
+            Fechar inventário
+        </a>
+    </li>
+    {% else %}
+    <li>
+        <a href="/inventario/reabrir/{{original.pk}}/">
+            Reabrir inventário
+        </a>
+    </li>
+    {% endif %}
+    {% endblock %}
+  </ul>
+{% endblock %}
+
+<!-- [21/08/19] Added by: R.Zacche - INI -->
+{% block content %}
+<input id="selSecoes" type="hidden" value="{{original.secoes}}" />
+{{ block.super }}
+<script type="text/javascript">
+	configuraSecoes();
+	function configuraSecoes() {
+		if ($("#id_tipo").val() === 's') {
+			$(".field-secoes").show();
+			var list = $("#selSecoes").val().split(';');
+			for (var i = 0; i < $("input[name=secoes]").size();i++){
+				var item = $("input[name=secoes]")[i];
+				for (var j = 0; j < list.length ;j++){
+					if (item.value === list[j]) {
+						$(item).prop('checked',true);
+						break;
+					}
+				}
+			}
+		}
+		else {
+			$(".field-secoes").hide();
+			$("input[name=secoes]").prop('checked',false);
+		}
+		configuraBotaoSalvar();
+	}
+	// configurar botaoes salvar
+	function configuraBotaoSalvar() {
+		var title = '';
+		var disabled = false;
+		if ($("#id_tipo").val() == 's' && $("input[name=secoes]:checked").size() <= 0) {
+			disabled = true;
+			title = 'Selecione uma seção para habilitar esse comando';
+		}
+		else {
+			disabled = false;
+			title = '';
+		}
+		// desabilita botao para salvar
+		$("input[name=_save]").prop('disabled',disabled);
+		$("input[name=_addanother]").prop('disabled',disabled);
+		$("input[name=_continue]").prop('disabled',disabled);
+		// atualiza titulo
+		$("input[name=_save]").prop('title',title);
+		$("input[name=_addanother]").prop('title',title);
+		$("input[name=_continue]").prop('title',title);
+	}
+	// evento selecionar tipo
+	$("#id_tipo").change(function(){
+		configuraSecoes();
+	});
+	$("input[name=secoes]").change(function(){
+		configuraBotaoSalvar();
+	});
+</script>
+{% endblock %}
+<!-- [21/08/19] Added by: R.Zacche - END -->
+
+{% block form_top %}{{ block.super }}
+{% if original %}
+<div style="max-width:500px;float:right; margin-left:10px; margin-right:10px;">
+    <table>
+        <tr>
+            <td>
+                <a href="/inventario/importar-estoque-sistema/{{original.pk}}/">
+                    Upload de Planilha do Estoque do Sistema
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a target="__blank" href="/inventario/relatorio-relacao-produto-coletas/{{original.pk}}/pc">
+                    Relação Produtos x Coleta
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a target="__blank" href="/inventario/relatorio-relacao-produto-coletas/{{original.pk}}/nc">
+                    Relação Produtos Não Contados
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a target="__blank" href="/inventario/relatorio-relacao-produto-coletas/{{original.pk}}/cd">
+                    Relação Produtos Com Diferenças - Todos
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a target="__blank" href="/inventario/relatorio-relacao-produto-coletas/{{original.pk}}/cdn">
+                    Relação Produtos Com Diferenças - Negativo
+                </a>
+            </td>
+        </tr>
+        <td>
+            <a target="__blank" href="/inventario/relatorio-relacao-produto-coletas/{{original.pk}}/cdp">
+                Relação Produtos Com Diferenças - Positivo
+            </a>
+        </td>
+    </tr>
+        <tr>
+            <td>
+                <a target="__blank" href="/inventario/gerar-txt/{{original.pk}}/">
+                    Gerar TXT
+                </a>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endif %}
+{% endblock form_top %}
+
+

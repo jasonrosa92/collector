@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}{{block.super}}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/styles.css" %}" />
+{% endblock extrastyle %}
+
+{% block content %}
+<h1>Importação <small>Planilha de Estoque do Sistema</small></h1>
+
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+    <div class="inner">
+        <table class="form">
+            {{form}}
+        </table>
+    </div>
+    <button type="submit">Enviar arquivo</button>
+</form>
+
+<p class="texto_fosco">Explicar que a planilha tem que ser de um padrão e ter um link pra mostrar uma planilha modelo.</p>
+
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script type="text/javascript" src="{{ STATIC_URL }}admin/js/vendor/jquery/jquery.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/zepto.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.mask.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/importar-planilha-estoque.js"></script>
+{% endblock %}
